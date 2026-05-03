@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>NÃO DEIXE ELE TE PEGAR - 6 CHAVES & BORDAS</title>
+    <title>NÃO DEIXE ELE TE PEGAR</title>
     <style>
         body { margin: 0; overflow: hidden; background: #050505; font-family: 'Courier New', Courier, monospace; touch-action: none; }
         #gameCanvas { display: block; filter: contrast(1.2) brightness(0.8); }
@@ -65,7 +65,7 @@
             y: canvas.height - 200,
             width: 80, 
             height: 100,
-            speed: 4.9, 
+            speed: 4.5, // Velocidade base constante
             img: new Image()
         };
         monster.img.src = 'monstro.jpg';
@@ -135,6 +135,7 @@
         function update() {
             if (gameOver) return;
             let moveX = 0, moveY = 0;
+            
             if (inputKeys['ArrowUp'] || inputKeys['KeyW']) moveY -= player.speed;
             if (inputKeys['ArrowDown'] || inputKeys['KeyS']) moveY += player.speed;
             if (inputKeys['ArrowLeft'] || inputKeys['KeyA']) moveX -= player.speed;
@@ -144,8 +145,8 @@
                 const dx = touchTarget.x - player.x;
                 const dy = touchTarget.y - player.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > 5) {
-                    const touchSpeed = Math.min(player.speed, dist / 10);
+                if (dist > 10) { // Pequena deadzone para evitar trepidação
+                    const touchSpeed = player.speed; 
                     moveX = (dx / dist) * touchSpeed;
                     moveY = (dy / dist) * touchSpeed;
                 }
@@ -164,9 +165,12 @@
                 }
             });
 
+            // IA DO MONSTRO ESTABILIZADA
             const mdx = player.x - (monster.x + monster.width/2);
             const mdy = player.y - (monster.y + monster.height/2);
             const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+            
+            // Limitamos o movimento para ser puramente baseado na velocidade dele, independente do input
             let mMoveX = (mdx / mdist) * monster.speed;
             let mMoveY = (mdy / mdist) * monster.speed;
 
@@ -196,18 +200,15 @@
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Portal
             ctx.strokeStyle = chavesColetadas === 6 ? '#00ff00' : '#333';
             ctx.lineWidth = 5;
             ctx.beginPath();
             ctx.roundRect(finishLine.x, finishLine.y, finishLine.size, finishLine.size, 10);
             ctx.stroke();
             
-            // --- PAREDES COM BORDAS ARREDONDADAS ---
             ctx.fillStyle = '#1a1a1a';
             walls.forEach(w => {
                 ctx.beginPath();
-                // O valor 8 define o quão arredondada é a borda
                 ctx.roundRect(w.x, w.y, w.w, w.h, 8);
                 ctx.fill();
             });
