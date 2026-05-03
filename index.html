@@ -36,11 +36,15 @@
         const ctx = canvas.getContext('2d');
         const jumpscareDiv = document.getElementById('jumpscare');
 
+        // --- SISTEMA DE ÁUDIO ---
         const somSusto = new Audio('grito.mp3');
         const musicaFundo = new Audio('musica_fundo.mp3');
+        const somChave = new Audio('chave.mp3'); // NOVO: Nome do seu arquivo de som
+        
         musicaFundo.loop = true;
         musicaFundo.volume = 0.4;
         somSusto.preload = 'auto';
+        somChave.preload = 'auto'; // Garante que o som carregue antes de ser usado
 
         let audioContextIniciado = false;
         async function iniciarAudio() {
@@ -65,7 +69,7 @@
             y: canvas.height - 200,
             width: 80, 
             height: 100,
-            speed: 4.5, // Velocidade base constante
+            speed: 3.8, 
             img: new Image()
         };
         monster.img.src = 'monstro.jpg';
@@ -145,32 +149,34 @@
                 const dx = touchTarget.x - player.x;
                 const dy = touchTarget.y - player.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > 10) { // Pequena deadzone para evitar trepidação
-                    const touchSpeed = player.speed; 
-                    moveX = (dx / dist) * touchSpeed;
-                    moveY = (dy / dist) * touchSpeed;
+                if (dist > 10) {
+                    moveX = (dx / dist) * player.speed;
+                    moveY = (dy / dist) * player.speed;
                 }
             }
 
             if (!checkWall(player.x + moveX - player.size, player.y - player.size, player.size*2, player.size*2)) player.x += moveX;
             if (!checkWall(player.x - player.size, player.y + moveY - player.size, player.size*2, player.size*2)) player.y += moveY;
 
+            // --- LÓGICA DE COLETA COM SOM ---
             keysObj.forEach(k => {
                 if (!k.coletada) {
                     const distK = Math.sqrt((player.x - k.x)**2 + (player.y - k.y)**2);
                     if (distK < 30) {
                         k.coletada = true;
                         chavesColetadas++;
+                        
+                        // Toca o som da chave
+                        somChave.currentTime = 0; // Reinicia o som caso pegue outra chave rápido
+                        somChave.play().catch(() => {});
                     }
                 }
             });
 
-            // IA DO MONSTRO ESTABILIZADA
             const mdx = player.x - (monster.x + monster.width/2);
             const mdy = player.y - (monster.y + monster.height/2);
             const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
             
-            // Limitamos o movimento para ser puramente baseado na velocidade dele, independente do input
             let mMoveX = (mdx / mdist) * monster.speed;
             let mMoveY = (mdy / mdist) * monster.speed;
 
@@ -187,7 +193,7 @@
                 document.getElementById('ui').style.color = "#00ff00";
                 if (player.x > finishLine.x && player.x < finishLine.x + finishLine.size &&
                     player.y > finishLine.y && player.y < finishLine.y + finishLine.size) {
-                    alert("VOCÊ SOBREVIVEU!");
+                    alert("VOCÊ ESCAPOU!");
                     location.reload();
                 }
             } else {
